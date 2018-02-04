@@ -1,24 +1,29 @@
 package org.grails.plugin.hibernate.filter
 
-import org.grails.datastore.mapping.model.PersistentEntity
+import grails.core.GrailsClass
 import org.hibernate.MappingException
 import org.hibernate.boot.spi.InFlightMetadataCollector
 import org.hibernate.cfg.SecondPass
 
 class HibernateFilterSecondPass implements SecondPass {
 
-	def grailsDomainClassMappingContext
-    protected InFlightMetadataCollector mappings
+    InFlightMetadataCollector mappings
+    Map persistentClasses
 
-    HibernateFilterSecondPass(InFlightMetadataCollector mappings) {
+    List<HibernateFilterBuilder> filtersBuilders = []
+    GrailsClass[] grailsDomainClasses
+
+    HibernateFilterSecondPass(InFlightMetadataCollector mappings, GrailsClass[] grailsDomainClasses) {
         this.mappings = mappings
+        this.grailsDomainClasses = grailsDomainClasses
     }
 
 	void doSecondPass(Map persistentClasses) throws MappingException {
-		grailsDomainClassMappingContext.persistentEntities.each { PersistentEntity persistentEntity ->
-			if (persistentEntity.hasProperty('hibernateFilters', Closure)) {
-				new HibernateFilterBuilder(mappings, persistentEntity, persistentClasses.get(persistentEntity.name))
-			}
-		}
+        grailsDomainClasses.each { GrailsClass grailsDomainClass ->
+            if(grailsDomainClass.hasProperty('hibernateFilters')) {
+                filtersBuilders << new HibernateFilterBuilder(this.mappings, grailsDomainClass, persistentClasses.get(grailsDomainClass.fullName))
+            }
+        }
+        this.persistentClasses = persistentClasses
 	}
 }

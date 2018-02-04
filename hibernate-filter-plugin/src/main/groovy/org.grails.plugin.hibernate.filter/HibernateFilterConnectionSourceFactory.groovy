@@ -1,5 +1,6 @@
 package org.grails.plugin.hibernate.filter
 
+import grails.core.GrailsClass
 import org.grails.orm.hibernate.connections.HibernateConnectionSourceFactory
 
 /**
@@ -7,8 +8,12 @@ import org.grails.orm.hibernate.connections.HibernateConnectionSourceFactory
  */
 class HibernateFilterConnectionSourceFactory extends HibernateConnectionSourceFactory {
 
-    HibernateFilterConnectionSourceFactory(Class...classes) {
-        super(classes)
-        this.metadataContributor = new HibernateFilterBinder()
+    HibernateFilterBinder filterBinder
+
+    HibernateFilterConnectionSourceFactory(GrailsClass[] grailsDomainclasses) {
+        super(*grailsDomainclasses*.clazz)
+
+        this.filterBinder = new HibernateFilterBinder(grailsDomainclasses)
+        this.metadataContributor = this.filterBinder
     }
 }

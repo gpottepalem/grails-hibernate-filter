@@ -1,6 +1,7 @@
 package org.grails.plugin.hibernate.filter
 
 import groovy.transform.CompileStatic
+import org.hibernate.Session
 import org.hibernate.SessionFactory
 
 @CompileStatic
@@ -13,7 +14,7 @@ class HibernateFilterInterceptor {
     }
 
     boolean before() {
-        def session = sessionFactory.currentSession
+        Session session = sessionFactory.currentSession
         if (session) {
             DefaultHibernateFiltersHolder.defaultFilters.each {
                 session.enableFilter it

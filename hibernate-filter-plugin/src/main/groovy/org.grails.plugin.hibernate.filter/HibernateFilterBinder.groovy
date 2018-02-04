@@ -1,5 +1,6 @@
 package org.grails.plugin.hibernate.filter
 
+import grails.core.GrailsClass
 import groovy.transform.CompileStatic
 import org.hibernate.boot.spi.InFlightMetadataCollector
 import org.hibernate.boot.spi.MetadataContributor
@@ -11,6 +12,13 @@ import org.jboss.jandex.IndexView
 @CompileStatic
 class HibernateFilterBinder implements MetadataContributor {
 
+    HibernateFilterSecondPass hibernateFilterSecondPass
+    GrailsClass[] grailsDomainClasses
+
+    HibernateFilterBinder(GrailsClass[] grailsDomainClasses) {
+        this.grailsDomainClasses = grailsDomainClasses
+    }
+
     /**
      * Perform the contributions.
      *
@@ -18,6 +26,7 @@ class HibernateFilterBinder implements MetadataContributor {
      * @param jandexIndex The Jandex index
      */
     void contribute(InFlightMetadataCollector metadataCollector, IndexView jandexIndex) {
-        metadataCollector.addSecondPass(new HibernateFilterSecondPass(metadataCollector))
+        hibernateFilterSecondPass = new HibernateFilterSecondPass(metadataCollector, grailsDomainClasses)
+        metadataCollector.addSecondPass(hibernateFilterSecondPass)
     }
 }

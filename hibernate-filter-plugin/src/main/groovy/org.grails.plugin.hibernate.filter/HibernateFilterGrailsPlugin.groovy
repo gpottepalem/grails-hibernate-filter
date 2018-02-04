@@ -3,6 +3,8 @@ package org.grails.plugin.hibernate.filter
 import grails.core.GrailsClass
 import grails.plugins.*
 import org.grails.core.artefact.DomainClassArtefactHandler
+import org.grails.datastore.mapping.model.PersistentEntity
+import org.springframework.context.ApplicationContext
 
 class HibernateFilterGrailsPlugin extends Plugin {
 
@@ -39,11 +41,23 @@ class HibernateFilterGrailsPlugin extends Plugin {
 	}
 
     Closure doWithSpring() {{->
-
-		hibernateConnectionSourceFactory(HibernateFilterConnectionSourceFactory)
+		GrailsClass[] domainClasses = grailsApplication.getArtefacts(DomainClassArtefactHandler.TYPE)
+		hibernateConnectionSourceFactory(HibernateFilterConnectionSourceFactory, domainClasses)
 
         hibernateFilterInterceptor(HibernateFilterInterceptor) {
             sessionFactory = ref('sessionFactory')
         }
     }}
+
+    @Override
+    void doWithApplicationContext() {
+        ApplicationContext appContext = grailsApplication.mainContext
+        HibernateFilterSecondPass secondPass = appContext.getBean('hibernateConnectionSourceFactory').filterBinder.hibernateFilterSecondPass
+        def persistentEntities = appContext.grailsDomainClassMappingContext.persistentEntities
+
+        secondPass.filtersBuilders.each { filterBuilder ->
+            PersistentEntity persistentEntity = persistentEntities.find{ it.name == filterBuilder.grailsDomainClass.fullName }
+            filterBuilder.addFilterDefinitionsToPersistentClass(secondPass.mappings, persistentEntity)
+        }
+    }
 }
